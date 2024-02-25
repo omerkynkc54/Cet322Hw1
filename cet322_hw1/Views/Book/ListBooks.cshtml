@@ -1,0 +1,255 @@
+﻿@model IEnumerable<cet322_hw1.Models.BookModel>
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: black;
+        color:aliceblue;
+        text-align: center;
+    }
+
+    .bg-green {
+        background-color: lightgreen;
+    }
+
+    .bg-red {
+        background-color: lightcoral;
+    }
+
+    .bg-yellow {
+        background-color: lightyellow;
+    }
+    h1 {
+        color:aliceblue;
+    }
+
+    .button-85 {
+      padding: 0.6em 2em;
+      border: none;
+      outline: none;
+      color: rgb(255, 255, 255);
+      background: #111;
+      cursor: pointer;
+      position: relative;
+      z-index: 0;
+      border-radius: 10px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .button-85:before {
+      content: "";
+      background: linear-gradient(
+        45deg,
+        #ff0000,
+        #ff7300,
+        #fffb00,
+        #48ff00,
+        #00ffd5,
+        #002bff,
+        #7a00ff,
+        #ff00c8,
+        #ff0000
+      );
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      background-size: 400%;
+      z-index: -1;
+      filter: blur(5px);
+      -webkit-filter: blur(5px);
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      animation: glowing-button-85 20s linear infinite;
+      transition: opacity 0.3s ease-in-out;
+      border-radius: 10px;
+    }
+
+    @@keyframes glowing-button-85 {
+      0% {
+        background-position: 0 0;
+      }
+      50% {
+        background-position: 400% 0;
+      }
+      100% {
+        background-position: 0 0;
+      }
+    }
+
+    .button-85:after {
+      z-index: -1;
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #222;
+      left: 0;
+      top: 0;
+      border-radius: 10px;
+    }
+
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+    .modal-content {
+        background-color: mediumpurple;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        align-items: center;
+    }
+
+    /* The Close Button */
+    .close {
+        color: ghostwhite;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        align-self: flex-end;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    
+</style>
+<body class="bg-dark text-light">
+    
+
+    <div id="addBookForm" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('addBookForm').style.display='none'">&times;</span>
+            <h3>Add a new book</h3>
+            </br>
+                <form action="/Book/AddBook" method="post">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="Name" required>
+                </br>
+                </br>
+                    <label for="writer">Writer:</label>
+                    <input type="text" id="writer" name="Writer" required>
+                </br>
+                </br>
+                <input class="button-85" type="submit" value="Add Book">
+                </form>
+            </br>
+        </div>
+    </div>
+    <h1>Books</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Writer</th>
+                <th>Available</th>
+                <th>Delivery Time</th>
+                <th>Time Left</th>
+                <th>Rent Book</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var book in Model)
+                {
+                    string rowClass = "";
+                    if (book.Available)
+                    {
+                        rowClass = "bg-green";
+                    }
+                    else
+                    {
+                        if (book.TimeLeft.TotalDays > 1)
+                        {
+                            rowClass = "bg-red";
+                        }
+                        else
+                        {
+                            rowClass = "bg-yellow";
+                        }
+                    }
+
+                    <tr class="@rowClass">
+                        <td>@book.Name</td>
+                        <td>@book.Writer</td>
+                        <td>@(book.Available ? "Yes" : "No")</td>
+                        <td>@(book.DeliveryTime.HasValue ? book.DeliveryTime.Value.ToString("yyyy-MM-dd") : "N/A")</td>
+                        <td>@book.TimeLeft.ToString(@"dd\.hh\:mm\:ss") </td>
+                        <td>
+                            @if (book.Available)
+                            {
+                                <button  class="button-85" onclick="openRentForm('@book.Name')">Rent</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">No books available</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </br>
+    <button class="button-85" onclick="document.getElementById('addBookForm').style.display='block'">Add Book</button>
+
+    <div id="rentForm" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('rentForm').style.display='none'">&times;</span>
+            <h3 id="modalTitle"></h3>
+            </br>
+                <form id="rentBookForm" action="/Book/RentBook" method="post">
+                    <input type="hidden" id="bookName" name="bookName">
+                    <label for="firstName">Name:</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </br>
+                </br>
+                    <label for="lastName">Surname:</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </br>
+                </br>
+                    <label for="deliveryTime">Delivery Time:</label>
+                    <input type="datetime-local" id="deliveryTime" name="deliveryTime" required>
+                </br>
+                </br>
+                <input class="button-85" type="submit" value="Rent Book">
+                </form>
+        </div>
+    </div>
+    <script>
+        function openRentForm(bookName) {
+            document.getElementById('bookName').value = bookName;
+            document.getElementById('modalTitle').textContent = "Renting " + bookName;
+            document.getElementById('rentForm').style.display = 'block';
+        }
+    </script>
+</body>
